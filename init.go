@@ -1,6 +1,8 @@
 package pencere
 
 import (
+	"time"
+
 	tb "github.com/nsf/termbox-go"
 )
 
@@ -18,6 +20,13 @@ func Init() error {
 
 	root.Width, root.Height = tb.Size()
 
+	timer1 := time.NewTimer(100 * time.Millisecond)
+	go func() {
+		<-timer1.C
+		if isRenderDirty {
+			Render()
+		}
+	}()
 	return nil
 }
 

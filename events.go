@@ -23,6 +23,24 @@ type EventStream struct {
 func (this EventStream) HandleEvent(e tb.Event) {
 	if e.Ch == 'q' {
 		StopLoop()
+		return
+	}
+
+	if e.Type == tb.EventKey {
+		if focusedPencere != nil {
+
+			event := KeyEvent{
+				Key:  e.Key,
+				Rune: e.Ch,
+				Mod:  e.Mod,
+			}
+			if focusedPencere.OnKeyEvent != nil {
+				focusedPencere.OnKeyEvent(event)
+			}
+		}
+
+		Render()
+		return
 	}
 
 	if e.Type == tb.EventResize {
@@ -30,20 +48,60 @@ func (this EventStream) HandleEvent(e tb.Event) {
 		root.Width = e.Width
 		root.Height = e.Height
 
+		tb.Clear(0, 0)
+		tb.Flush()
 		//panic(fmt.Sprintf("RESIZE %v %v", e.Width, e.Height))
-		Layout()
+		layoutPencere(root)
+
 		Render()
+
+		return
 	}
 
 	if e.Type == tb.EventMouse {
 		switch e.Key {
 		case tb.MouseLeft:
-			root.dispatchMouseLeftClick(MouseEvent{
+
+			p, x, y := getPencereAt(e.MouseX, e.MouseY)
+
+			event := MouseEvent{
+				Target:  p,
 				GlobalX: e.MouseX,
 				GlobalY: e.MouseY,
-				X:       e.MouseX,
-				Y:       e.MouseY,
-			})
+				X:       x,
+				Y:       y,
+			}
+
+			cur := p
+			for {
+				if cur == nil {
+					break
+				}
+
+				if cur.OnMouseLeftClick != nil {
+					cur.OnMouseLeftClick(event)
+					break
+				} else {
+					cur = cur.parent
+				}
+			}
+
+			cur = p
+			for {
+				if cur == nil {
+					break
+				}
+
+				if cur.CanFocus {
+
+					SetFocus(cur)
+					break
+				} else {
+					cur = cur.parent
+				}
+			}
+
+			Render()
 			//return "<MouseLeft>"
 			// case tb.MouseMiddle:
 			// 	return "<MouseMiddle>"
@@ -64,4 +122,16 @@ type MouseEvent struct {
 	GlobalX, GlobalY int
 	X, Y             int
 	Type             int
+}
+
+// Modifier is a mask of modifier keys.
+type Modifier int16
+
+type Key uint16
+
+type KeyEvent struct {
+	Target *Pencere
+	Mod    tb.Modifier // one of Mod* constants or 0
+	Key    tb.Key      // one of Key* constants, invalid if 'Ch' is not 0
+	Rune   rune
 }

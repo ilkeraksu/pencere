@@ -2,22 +2,54 @@ package pencere
 
 func Decorate(this *Pencere, buf *Buffer) {
 	if this.HasBorder {
-		drawBorder(this, buf)
+		if this.HasFocus {
+			drawFocusedBorder(this, buf)
+
+		} else {
+
+			drawBorder(this, buf)
+		}
+		if this.Label != "" {
+			drawLabel(this, buf)
+		}
 	}
-	if this.Label != "" {
-		drawLabel(this, buf)
-	}
+
 }
 
 func drawBorder(this *Pencere, buf *Buffer) {
-	x := this.Width + 1
-	y := this.Height + 1
+	x := this.Width - 1
+	y := this.Height - 1
 
 	// draw lines
 	buf.Merge(NewFilledBuffer(0, 0, x, 1, Cell{HORIZONTAL_LINE, this.BorderFg, this.BorderBg}))
 	buf.Merge(NewFilledBuffer(0, y, x, y+1, Cell{HORIZONTAL_LINE, this.BorderFg, this.BorderBg}))
 	buf.Merge(NewFilledBuffer(0, 0, 1, y+1, Cell{VERTICAL_LINE, this.BorderFg, this.BorderBg}))
-	buf.Merge(NewFilledBuffer(x, 0, x+1, y+1, Cell{VERTICAL_LINE, this.BorderFg, this.BorderBg}))
+	if this.Scrollable && this.ContentY > this.Height {
+		buf.Merge(NewFilledBuffer(x, 0, x+1, y+1, Cell{SCROLL_BASE, this.BorderBg, this.BorderFg}))
+	} else {
+		buf.Merge(NewFilledBuffer(x, 0, x+1, y+1, Cell{VERTICAL_LINE, this.BorderFg, this.BorderBg}))
+	}
+
+	// draw corners
+	buf.SetCell(0, 0, Cell{TOP_LEFT, this.BorderFg, this.BorderBg})
+	buf.SetCell(x, 0, Cell{TOP_RIGHT, this.BorderFg, this.BorderBg})
+	buf.SetCell(0, y, Cell{BOTTOM_LEFT, this.BorderFg, this.BorderBg})
+	buf.SetCell(x, y, Cell{BOTTOM_RIGHT, this.BorderFg, this.BorderBg})
+}
+
+func drawFocusedBorder(this *Pencere, buf *Buffer) {
+	x := this.Width - 1
+	y := this.Height - 1
+
+	// draw lines
+	buf.Merge(NewFilledBuffer(0, 0, x, 1, Cell{FOCUSED_TOP, this.BorderFg, this.BorderBg}))
+	buf.Merge(NewFilledBuffer(0, y, x, y+1, Cell{HORIZONTAL_LINE, this.BorderFg, this.BorderBg}))
+	buf.Merge(NewFilledBuffer(0, 0, 1, y+1, Cell{VERTICAL_LINE, this.BorderFg, this.BorderBg}))
+	if this.Scrollable && this.ContentY > this.Height {
+		buf.Merge(NewFilledBuffer(x, 0, x+1, y+1, Cell{SCROLL_BASE, this.BorderBg, this.BorderFg}))
+	} else {
+		buf.Merge(NewFilledBuffer(x, 0, x+1, y+1, Cell{VERTICAL_LINE, this.BorderFg, this.BorderBg}))
+	}
 
 	// draw corners
 	buf.SetCell(0, 0, Cell{TOP_LEFT, this.BorderFg, this.BorderBg})

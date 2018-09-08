@@ -41,7 +41,12 @@ func NewFilledBuffer(x0, y0, x1, y1 int, c Cell) *Buffer {
 
 // SetCell assigns a Cell to (x,y).
 func (self *Buffer) SetCell(x, y int, c Cell) {
-	self.CellMap[image.Pt(x, y)] = c
+	if self.Area.Min.X <= x && x < self.Area.Max.X &&
+		self.Area.Min.Y <= y && y < self.Area.Max.Y {
+		self.CellMap[image.Pt(x, y)] = c
+	}
+	//	self.CellMap[image.Pt(x, y)] = c
+
 }
 
 // SetString assigns a string to a Buffer starting at (x,y).
@@ -94,6 +99,14 @@ func (self *Buffer) Fill(c Cell) {
 	for x := self.Area.Min.X; x < self.Area.Max.X; x++ {
 		for y := self.Area.Min.Y; y < self.Area.Max.Y; y++ {
 			self.SetCell(x, y, c)
+		}
+	}
+}
+
+func (self *Buffer) MergeChildArea(buf *Buffer, left, top, width, height int) {
+	for pt, cell := range buf.CellMap {
+		if pt.X >= 0 && pt.X < width && pt.Y >= 0 && pt.Y < height {
+			self.SetCell(pt.X+left, pt.Y+top, cell)
 		}
 	}
 }

@@ -1,11 +1,16 @@
 package pencere
 
-var root *Pencere = newRoot()
+var root *Pencere
+var body *Pencere
+
+func init() {
+	root = newRoot()
+}
 
 func newRoot() *Pencere {
 	p := NewPencere()
 
-	p.Render = ColumnRenderer(p)
+	//p.Render = ColumnRenderer(p)
 	return p
 }
 

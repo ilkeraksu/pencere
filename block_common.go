@@ -15,4 +15,13 @@ const (
 	HORIZONTAL_UP   = '┴'
 	QUOTA_LEFT      = '«'
 	QUOTA_RIGHT     = '»'
+
+	FOCUSED_TOP_LEFT = '╒'
+	FOCUSED_TOP_RIGT = '╕'
+	FOCUSED_TOP      = '═'
+
+	//SCROLL_BASE = '░'
+	//SCROLL_BASE   = '█'
+	SCROLL_BASE   = ' '
+	SCROLL_BUTTON = '█'
 )

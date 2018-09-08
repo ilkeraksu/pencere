@@ -7,7 +7,8 @@ import (
 // Loop gets events from termbox and passes them off to handleEvent.
 // Stops when StopLoop is called.
 func Loop() {
-	Layout()
+	root.Width, root.Height = tb.Size()
+	layoutPencere(root)
 	render()
 	go func() {
 		for {

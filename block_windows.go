@@ -15,4 +15,8 @@ const (
 	HORIZONTAL_UP   = '┴'
 	QUOTA_LEFT      = '«'
 	QUOTA_RIGHT     = '»'
+
+	FOCUSED_TOP_LEFT = '╒'
+	FOCUSED_TOP_RIGT = '╕'
+	FOCUSED_TOP      = '═'
 )
