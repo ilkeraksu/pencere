@@ -146,7 +146,6 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 		if err != nil {
 			return nil, e.WrapfEx(err, "jdjf", "could not render")
 		}
-
 		buf.MergeChildArea(childBuffer, c.Left, c.Top, c.Width, c.Height)
 	}
 
@@ -157,7 +156,8 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 
 // Clear clears the screen with the default Bg color.
 func Clear() {
-	tb.Clear(tb.ColorDefault+1, tb.Attribute(Theme.Bg)+1)
+	panic("NOTIMPLEMENTED")
+	//tb.Clear(tb.ColorDefault+1, tb.Attribute(Theme.Bg)+1)
 }
 
 // func Layout() error {
@@ -175,8 +175,8 @@ func layoutPencere(p *Pencere) error {
 	} else {
 		p.Inner.Min.X = 0
 		p.Inner.Min.Y = 0
-		p.Inner.Max.X = p.Width + 1
-		p.Inner.Max.Y = p.Height + 1
+		p.Inner.Max.X = p.Width
+		p.Inner.Max.Y = p.Height
 	}
 
 	if p.topBar != nil {
@@ -187,6 +187,7 @@ func layoutPencere(p *Pencere) error {
 		ts.Top = p.Inner.Min.Y
 
 		p.Inner.Min.Y = p.Inner.Min.Y + ts.Height
+		layoutPencere(ts)
 	}
 
 	if p.buttomBar != nil {
@@ -197,8 +198,30 @@ func layoutPencere(p *Pencere) error {
 		ts.Top = p.Inner.Max.Y - ts.Height
 
 		p.Inner.Max.Y = p.Inner.Max.Y - ts.Height
+		layoutPencere(ts)
 	}
 
+	if p.rightBar != nil {
+
+		ts := p.rightBar
+		ts.Top = p.Inner.Min.Y
+		ts.Height = p.Inner.Dy()
+		ts.Left = ts.Parent().Inner.Max.X - ts.Width
+
+		p.Inner.Max.X = p.Inner.Max.X - ts.Width
+		layoutPencere(ts)
+	}
+
+	// if p.lefttBar != nil {
+
+	// 	ts := p.lefttBar
+	// 	ts.Top = p.Inner.Min.Y
+	// 	ts.Height = p.Inner.Dy()
+	// 	ts.Left = ts.Parent().Inner.Max.X - ts.Width
+
+	// 	p.Inner.Max.X = p.Inner.Max.X - ts.Width
+	// 	layoutPencere(ts)
+	// }
 	if p.Layout != nil {
 		err := p.Layout()
 		if err != nil {

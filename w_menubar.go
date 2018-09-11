@@ -2,8 +2,11 @@ package pencere
 
 import "fmt"
 
-func NewMenuBar() *Pencere {
-	p := NewPencere()
+func NewMenuBar(options ...Option) (*Pencere, error) {
+	p, err := NewPencere(options...)
+	if err != nil {
+		return nil, err
+	}
 	p.HasBorder = false
 	p.CanFocus = true
 	p.Render = func(buf *Buffer) error {
@@ -24,5 +27,5 @@ func NewMenuBar() *Pencere {
 	// 	return nil
 	// }
 
-	return p
+	return p, nil
 }

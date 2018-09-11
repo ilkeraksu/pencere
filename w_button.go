@@ -1,14 +1,15 @@
 package pencere
 
-func NewButton(label string) *Pencere {
-	p := NewPencere()
+func NewButton(label string, options ...Option) (*Pencere, error) {
+	p, err := NewPencere(options...)
+	if err != nil {
+		return nil, err
+	}
 	p.HasBorder = true
-	p.Width = len([]rune(label)) + 4
+	//p.Width = len([]rune(label)) + 4
 	p.Height = 3
 	//p.Label = label
 	p.Text = label
-	p.Bg = -1
-	p.Fg = 230
 
 	p.Render = func(buffer *Buffer) error {
 		//Decorate(p, buffer)
@@ -16,5 +17,5 @@ func NewButton(label string) *Pencere {
 		return nil
 	}
 
-	return p
+	return p, nil
 }

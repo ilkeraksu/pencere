@@ -8,6 +8,7 @@ import (
 // Stops when StopLoop is called.
 func Loop() {
 	root.Width, root.Height = tb.Size()
+
 	layoutPencere(root)
 	render()
 	go func() {

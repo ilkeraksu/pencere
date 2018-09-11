@@ -8,7 +8,10 @@ func init() {
 }
 
 func newRoot() *Pencere {
-	p := NewPencere()
+	p, err := NewPencere()
+	if err != nil {
+		panic(err)
+	}
 
 	//p.Render = ColumnRenderer(p)
 	return p

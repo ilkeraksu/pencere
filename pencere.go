@@ -4,6 +4,8 @@ import (
 	"image"
 	"sort"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 type Event struct {
@@ -66,14 +68,44 @@ type Pencere struct {
 	buttomBar *Pencere
 	leftBar   *Pencere
 	rightBar  *Pencere
+	Theme     *Theme
 }
 
-func NewPencere() *Pencere {
+func NewPencere(options ...Option) (*Pencere, error) {
 	p := &Pencere{
 		handle:     getHandleId(),
 		properties: make(map[string]interface{}),
+		Theme:      DefaultTheme,
 	}
-	return p
+
+	err := p.Apply(options...)
+	if err != nil {
+		return nil, err
+	}
+
+	style := p.Theme.Style("default")
+	p.Fg = style.Fg
+	p.Bg = style.Bg
+
+	labelStyle := p.Theme.Style("label")
+	p.Fg = labelStyle.Fg
+	p.Bg = labelStyle.Bg
+
+	borderStyle := p.Theme.Style("border")
+	p.Fg = borderStyle.Fg
+	p.Bg = borderStyle.Bg
+
+	return p, nil
+}
+
+func (this *Pencere) Apply(options ...Option) error {
+	for _, option := range options {
+		err := option(this)
+		if err != nil {
+			return errors.Wrapf(err, "can not set option")
+		}
+	}
+	return nil
 }
 
 func (this *Pencere) GetValue(name string) interface{} {

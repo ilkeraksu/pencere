@@ -4,8 +4,11 @@ type Splitter struct {
 	*Pencere
 }
 
-func NewVerticalSplitter() *Pencere {
-	p := NewPencere()
+func NewVerticalSplitter(options ...Option) (*Pencere, error) {
+	p, err := NewPencere(options...)
+	if err != nil {
+		return nil, err
+	}
 	p.HasBorder = false
 	p.Width = 1
 	p.Render = func(buf *Buffer) error {
@@ -18,5 +21,12 @@ func NewVerticalSplitter() *Pencere {
 		return nil
 	}
 
-	return p
+	p.Layout = func() error {
+		p.Top = p.Parent().Inner.Min.Y
+		p.Height = p.Parent().Inner.Dy()
+
+		return nil
+	}
+	p.LayoutOrder = -100
+	return p, nil
 }

@@ -4,9 +4,12 @@ import (
 	tb "github.com/nsf/termbox-go"
 )
 
-func NewTextBox() *Pencere {
+func NewTextBox(options ...Option) (*Pencere, error) {
 
-	p := NewPencere()
+	p, err := NewPencere(options...)
+	if err != nil {
+		return nil, err
+	}
 	p.HasBorder = false
 	p.CanFocus = true
 
@@ -124,5 +127,5 @@ func NewTextBox() *Pencere {
 		return nil
 	}
 
-	return p
+	return p, nil
 }

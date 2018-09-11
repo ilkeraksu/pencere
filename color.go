@@ -30,17 +30,17 @@ type Colorscheme struct {
 	GaugeColor  Color
 }
 
-var Theme = Colorscheme{
-	Fg: 7,
-	Bg: -1,
+// var Theme = Colorscheme{
+// 	Fg: 7,
+// 	Bg: -1,
 
-	LabelFg:  7,
-	LabelBg:  -1,
-	BorderFg: 6,
-	BorderBg: -1,
+// 	LabelFg:  7,
+// 	LabelBg:  -1,
+// 	BorderFg: 6,
+// 	BorderBg: -1,
 
-	Sparkline:   4,
-	LineGraph:   0,
-	TableCursor: 4,
-	GaugeColor:  7,
-}
+// 	Sparkline:   4,
+// 	LineGraph:   0,
+// 	TableCursor: 4,
+// 	GaugeColor:  7,
+// }
