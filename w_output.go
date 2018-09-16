@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func NewOutput(output chan string, options ...Option) (*Pencere, error) {
+func NewOutput(options ...Option) (*Pencere, error) {
 	p, err := NewPencere(options...)
 	if err != nil {
 		return nil, err
@@ -27,15 +27,15 @@ func NewOutput(output chan string, options ...Option) (*Pencere, error) {
 		return nil
 	}
 
-	go func() {
-		for {
-			select {
-			case s := <-output:
-				p.Text = p.Text + "\n" + s
-			}
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case s := <-output:
+	// 			p.Text = p.Text + "\n" + s
+	// 		}
 
-		}
-	}()
+	// 	}
+	// }()
 
 	return p, nil
 }

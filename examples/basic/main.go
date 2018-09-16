@@ -1,21 +1,22 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ilkeraksu/pencere"
 )
 
-var output chan string
+//var output chan string
 
 func init() {
-	output = make(chan string)
+	//	output = make(chan string)
 }
 
-func Out(s string) {
+// func Out(s string) {
 
-	output <- s
-}
+// 	output <- s
+// }
 
 func main() {
 
@@ -37,7 +38,7 @@ func run() error {
 
 	pencere.Root().SetTopBar(menubar)
 
-	output, err := pencere.NewOutput(output)
+	output, err := pencere.NewOutput()
 	output.Width = 50
 	output.Label = "output"
 
@@ -48,7 +49,7 @@ func run() error {
 		return err
 	}
 
-	pencere.Root().Add(b)
+	pencere.Root().AddPencere(b)
 
 	b.Label = "ilker"
 
@@ -68,7 +69,7 @@ func run() error {
 		return err
 	}
 
-	b.Add(c1)
+	b.AddPencere(c1)
 
 	c1.Label = "[x] c1"
 
@@ -77,7 +78,7 @@ func run() error {
 		return err
 	}
 
-	b.Add(c2)
+	b.AddPencere(c2)
 	c2.Label = "c2"
 
 	c2.Scrollable = true
@@ -107,7 +108,7 @@ func run() error {
 
 	txt.Scrollable = true
 
-	c2.Add(txt)
+	c2.AddPencere(txt)
 
 	txt2, err := pencere.NewTextBox(pencere.Position(55, 10, 40, 30))
 	if err != nil {
@@ -116,21 +117,21 @@ func run() error {
 
 	txt2.HasBorder = false
 
-	c2.Add(txt2)
+	c2.AddPencere(txt2)
 
 	b2, err := pencere.NewBox(pencere.LayoutFill())
 	if err != nil {
 		return err
 	}
 
-	c2.Add(b2)
+	c2.AddPencere(b2)
 
 	b3, err := pencere.NewBox(pencere.LayoutFill())
 	if err != nil {
 		return err
 	}
 
-	b2.Add(b3)
+	b2.AddPencere(b3)
 
 	v, err := pencere.NewVerticalSplitter()
 	if err != nil {
@@ -144,9 +145,9 @@ func run() error {
 		return err
 	}
 
-	c2.Add(buton1)
+	c2.AddPencere(buton1)
 
-	b.Add(v)
+	b.AddPencere(v)
 
 	c2.Layout = func() error {
 		c2.Top = v.Top
@@ -168,7 +169,8 @@ func run() error {
 		//panic("TIK Id:" + event.Target.Id)
 		statusbar.Data = fmt.Sprintf("TIK Id:%v x:%v y:%v globalX:%v globlY:%v", event.Target.Id, event.X, event.Y, event.GlobalX, event.GlobalY)
 
-		Out(fmt.Sprintf("TIK Id:%v x:%v y:%v globalX:%v globlY:%v", event.Target.Id, event.X, event.Y, event.GlobalX, event.GlobalY))
+		pencere.Bus.PushEvent(context.Background(), "output.write", fmt.Sprintf("TIK Id:%v x:%v y:%v globalX:%v globlY:%v", event.Target.Id, event.X, event.Y, event.GlobalX, event.GlobalY))
+		//Out()
 		return nil
 	}
 

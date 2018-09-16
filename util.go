@@ -34,3 +34,9 @@ func Error(issue, diagnostics string) {
 	fmt.Println()
 	panic(1)
 }
+
+func panicif(err error) {
+	if err != nil {
+		panic(err)
+	}
+}

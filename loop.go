@@ -23,6 +23,16 @@ func Loop() {
 			return
 
 		case _ = <-eventStream.shouldRender:
+			var check = true
+			for check {
+				select {
+				case _ = <-eventStream.shouldRender:
+
+				default:
+					check = false
+				}
+			}
+
 			render()
 		case e := <-eventStream.eventQueue:
 			eventStream.HandleEvent(e)

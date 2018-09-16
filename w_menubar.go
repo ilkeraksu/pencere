@@ -16,6 +16,9 @@ func NewMenuBar(options ...Option) (*Pencere, error) {
 	}
 	p.Height = 1
 
+	menubarStyle := p.Theme.Style("menubar")
+	p.Fg = menubarStyle.Fg
+	p.Bg = menubarStyle.Bg
 	// p.Layout = func() error {
 
 	// 	p.Left = 1

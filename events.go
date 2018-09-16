@@ -1,6 +1,8 @@
 package pencere
 
 import (
+	"time"
+
 	tb "github.com/nsf/termbox-go"
 )
 
@@ -19,6 +21,13 @@ type EventStream struct {
 	stopLoop     chan bool
 	eventQueue   chan tb.Event // list of events from termbox
 }
+
+var mouseClickTime time.Time
+var mouseDragging bool
+var mouseReleaseWaiting bool
+
+var mouseLastClicked *Pencere
+var mouseDraggingWindow *Pencere
 
 func (this EventStream) HandleEvent(e tb.Event) {
 	if e.Ch == 'q' {
@@ -60,9 +69,78 @@ func (this EventStream) HandleEvent(e tb.Event) {
 
 	if e.Type == tb.EventMouse {
 		switch e.Key {
+
+		case tb.MouseRelease:
+			if mouseDragging {
+				if mouseDraggingWindow != nil {
+					if mouseDraggingWindow.OnDragEnd != nil {
+						event := MouseEvent{
+							Target:  mouseDraggingWindow,
+							GlobalX: e.MouseX,
+							GlobalY: e.MouseY,
+						}
+						mouseDraggingWindow.OnDragEnd(event)
+
+					}
+				}
+
+			}
+
+			mouseDragging = false
+			mouseReleaseWaiting = false
+			Render()
+			return
+
 		case tb.MouseLeft:
+			if mouseDragging {
+				if mouseDraggingWindow != nil {
+					if mouseDraggingWindow.OnDragging != nil {
+						event := MouseEvent{
+							Target:  mouseDraggingWindow,
+							GlobalX: e.MouseX,
+							GlobalY: e.MouseY,
+						}
+						mouseDraggingWindow.OnDragging(event)
+
+					}
+				}
+				Render()
+				return
+			}
+
+			//click
+			//if mouseReleaseWaiting && time.Now().After(mouseClickTime.Add(time.Millisecond*200)) {
+			if mouseReleaseWaiting {
+
+				p, x, y := getPencereAt(e.MouseX, e.MouseY)
+
+				_, _ = x, y
+
+				if p.OnDragBegin != nil {
+					event := MouseEvent{
+						Target:  p,
+						GlobalX: e.MouseX,
+						GlobalY: e.MouseY,
+						X:       x,
+						Y:       y,
+					}
+					drag, err := p.OnDragBegin(event)
+					panicif(err)
+					if drag {
+						mouseDraggingWindow = p
+						mouseDragging = true
+					}
+
+					Render()
+					return
+				} else {
+
+				}
+			}
 
 			p, x, y := getPencereAt(e.MouseX, e.MouseY)
+
+			mouseLastClicked = p
 
 			event := MouseEvent{
 				Target:  p,
@@ -102,6 +180,9 @@ func (this EventStream) HandleEvent(e tb.Event) {
 			}
 
 			Render()
+
+			mouseReleaseWaiting = true
+
 			//return "<MouseLeft>"
 			// case tb.MouseMiddle:
 			// 	return "<MouseMiddle>"

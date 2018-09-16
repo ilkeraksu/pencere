@@ -14,6 +14,8 @@ type Style struct {
 	Fg Color
 	Bg Color
 
+	Texture   rune
+	Brush     rune
 	Reverse   Decoration
 	Bold      Decoration
 	Underline Decoration
@@ -29,6 +31,9 @@ var DefaultTheme = &Theme{
 		"default":             {Fg: 100, Bg: 230},
 		"border":              {Fg: 230, Bg: 0},
 		"label":               {Fg: 230, Bg: 0},
+		"menubar":             {Fg: 12, Bg: 123},
+		"scrollbar":           {Fg: 12, Bg: 123, Texture: '░'},
+		"textbox":             {Fg: 12, Bg: 50, Texture: '░'},
 		"list.item.selected":  {Reverse: DecorationOn},
 		"table.cell.selected": {Reverse: DecorationOn},
 		"button.focused":      {Reverse: DecorationOn},

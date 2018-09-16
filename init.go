@@ -14,6 +14,9 @@ func Init() error {
 	}
 	tb.SetInputMode(tb.InputEsc | tb.InputMouse)
 	tb.SetOutputMode(tb.Output256)
+	//tb.SetOutputMode(tb.OutputNormal)
+	//tb.Clear(tb.ColorBlack, tb.ColorBlack)
+	//tb.SetOutputMode(tb.OutputNormal)
 
 	// Body = NewGrid()
 	// Body.Width, Body.Height = tb.Size()

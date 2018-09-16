@@ -8,11 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Event struct {
-	Type string
-	Data interface{}
-}
-
 type Pencere struct {
 	parent  *Pencere
 	Label   string
@@ -23,9 +18,9 @@ type Pencere struct {
 
 	Inner image.Rectangle
 
-	Fg Color
-	Bg Color
-
+	Fg            Color
+	Bg            Color
+	Texture       rune
 	ZIndex        int
 	childs        []*Pencere
 	Left, Top     int
@@ -61,6 +56,10 @@ type Pencere struct {
 	Data       interface{}
 	Controller interface{}
 
+	OnDragBegin func(event MouseEvent) (bool, error)
+	OnDragging  func(event MouseEvent) error
+	OnDragEnd   func(event MouseEvent) error
+
 	propertiesOnce sync.Once
 	properties     map[string]interface{}
 
@@ -76,11 +75,8 @@ func NewPencere(options ...Option) (*Pencere, error) {
 		handle:     getHandleId(),
 		properties: make(map[string]interface{}),
 		Theme:      DefaultTheme,
-	}
-
-	err := p.Apply(options...)
-	if err != nil {
-		return nil, err
+		Enabled:    true,
+		Visible:    true,
 	}
 
 	style := p.Theme.Style("default")
@@ -94,6 +90,11 @@ func NewPencere(options ...Option) (*Pencere, error) {
 	borderStyle := p.Theme.Style("border")
 	p.Fg = borderStyle.Fg
 	p.Bg = borderStyle.Bg
+
+	err := p.Apply(options...)
+	if err != nil {
+		return nil, err
+	}
 
 	return p, nil
 }
@@ -112,6 +113,30 @@ func (this *Pencere) GetValue(name string) interface{} {
 	return this.properties[name]
 }
 
+func (this *Pencere) GetString(key string, def string) string {
+	v, ok := this.properties[key]
+	if !ok {
+		return def
+	}
+	r, ok := v.(string)
+	if !ok {
+		return def
+	}
+	return r
+}
+
+func (this *Pencere) GetInt(key string, def int) int {
+	v, ok := this.properties[key]
+	if !ok {
+		return def
+	}
+	r, ok := v.(int)
+	if !ok {
+		return def
+	}
+	return r
+}
+
 func (this *Pencere) SetValue(name string, value interface{}) {
 	this.propertiesOnce.Do(func() {
 		this.properties = make(map[string]interface{})
@@ -127,7 +152,15 @@ func (this *Pencere) Childs() []*Pencere {
 	return this.childs
 }
 
-func (this *Pencere) Add(p *Pencere) {
+func (this *Pencere) AddPencere(p *Pencere) {
+
+	p.parent = this
+	this.childs = append(this.childs, p)
+
+}
+
+func (this *Pencere) AddControl(c Control) {
+	p := c.Pencere()
 	p.parent = this
 	this.childs = append(this.childs, p)
 }
@@ -257,6 +290,26 @@ func (this *Pencere) bubbleMouseEvent(event MouseEvent) {
 	this.parent.bubbleMouseEvent(event)
 }
 
+func (this *Pencere) TranslateToXY(globalX int, globalY int) (int, int) {
+	x, y := this.GlobalPosition()
+
+	return globalX - x, globalY - y
+}
+
+func (this *Pencere) GlobalPosition() (int, int) {
+	var x, y int
+
+	p := this
+	for p != nil {
+		x += p.Left
+		y += p.Left
+
+		p = p.Parent()
+	}
+
+	return x, y
+}
+
 func getPencereAt(globalX, globalY int) (*Pencere, int, int) {
 	p, x, y := getPencereOrChild(root, globalX, globalY)
 	return p, x, y
@@ -294,7 +347,7 @@ func getPencereOrChild(p *Pencere, x, y int) (*Pencere, int, int) {
 
 	for _, o := range ordered {
 		c := o.Pencere
-		if c.Left <= x && x < c.Left+c.Width &&
+		if c.Visible && c.Enabled && c.Left <= x && x < c.Left+c.Width &&
 			c.Top <= y && y < c.Top+c.Height {
 
 			return getPencereOrChild(c, x-c.Left, y-c.Top)

@@ -24,10 +24,11 @@ func drawBorder(this *Pencere, buf *Buffer) {
 	buf.Merge(NewFilledBuffer(0, 0, x, 1, Cell{HORIZONTAL_LINE, this.BorderFg, this.BorderBg}))
 	buf.Merge(NewFilledBuffer(0, y, x, y+1, Cell{HORIZONTAL_LINE, this.BorderFg, this.BorderBg}))
 	buf.Merge(NewFilledBuffer(0, 0, 1, y+1, Cell{VERTICAL_LINE, this.BorderFg, this.BorderBg}))
+	buf.Merge(NewFilledBuffer(x, 0, x+1, y+1, Cell{VERTICAL_LINE, this.BorderFg, this.BorderBg}))
+
 	if this.Scrollable && this.ContentY > this.Height {
-		buf.Merge(NewFilledBuffer(x, 0, x+1, y+1, Cell{SCROLL_BASE, this.BorderBg, this.BorderFg}))
-	} else {
-		buf.Merge(NewFilledBuffer(x, 0, x+1, y+1, Cell{VERTICAL_LINE, this.BorderFg, this.BorderBg}))
+		scrollbarStyle := this.Theme.Style("scrollbar")
+		buf.Merge(NewFilledBuffer(x, 3, x+1, y-1, Cell{scrollbarStyle.Texture, scrollbarStyle.Fg, scrollbarStyle.Bg}))
 	}
 
 	// draw corners
@@ -45,10 +46,11 @@ func drawFocusedBorder(this *Pencere, buf *Buffer) {
 	buf.Merge(NewFilledBuffer(0, 0, x, 1, Cell{FOCUSED_TOP, this.BorderFg, this.BorderBg}))
 	buf.Merge(NewFilledBuffer(0, y, x, y+1, Cell{HORIZONTAL_LINE, this.BorderFg, this.BorderBg}))
 	buf.Merge(NewFilledBuffer(0, 0, 1, y+1, Cell{VERTICAL_LINE, this.BorderFg, this.BorderBg}))
+	buf.Merge(NewFilledBuffer(x, 0, x+1, y+1, Cell{VERTICAL_LINE, this.BorderFg, this.BorderBg}))
+
 	if this.Scrollable && this.ContentY > this.Height {
-		buf.Merge(NewFilledBuffer(x, 0, x+1, y+1, Cell{SCROLL_BASE, this.BorderBg, this.BorderFg}))
-	} else {
-		buf.Merge(NewFilledBuffer(x, 0, x+1, y+1, Cell{VERTICAL_LINE, this.BorderFg, this.BorderBg}))
+		scrollbarStyle := this.Theme.Style("scrollbar")
+		buf.Merge(NewFilledBuffer(x, 3, x+1, y-1, Cell{scrollbarStyle.Texture, scrollbarStyle.Fg, scrollbarStyle.Bg}))
 	}
 
 	// draw corners

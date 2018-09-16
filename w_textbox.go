@@ -19,6 +19,10 @@ func NewTextBox(options ...Option) (*Pencere, error) {
 	p.SetValue("text", runeBuffer)
 	p.SetValue("offset", 0)
 
+	textboxStyle := p.Theme.Style("textbox")
+	p.Bg = textboxStyle.Bg
+	p.Fg = textboxStyle.Fg
+
 	p.Render = func(buf *Buffer) error {
 		//buf.SetString(1, 1, "DENEME 2", -1, -1)
 

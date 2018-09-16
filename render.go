@@ -64,7 +64,9 @@ func render() error {
 	for p, c := range buf.CellMap {
 		if p.In(buf.Area) {
 
+			//tb.SetCell(p.X, p.Y, c.Ch, tb.Attribute(c.Fg)+1, tb.Attribute(c.Bg)+1)
 			tb.SetCell(p.X, p.Y, c.Ch, tb.Attribute(c.Fg)+1, tb.Attribute(c.Bg)+1)
+			//	tb.SetCell(p.X, p.Y, c.Ch, tb.ColorBlue, tb.ColorCyan)
 
 		}
 	}
@@ -74,10 +76,13 @@ func render() error {
 }
 
 func renderPencere(p *Pencere) (*Buffer, error) {
+	if !p.Visible {
+		return nil, nil
+	}
 
 	buf := NewBuffer()
 	buf.SetAreaXY(p.Width, p.Height)
-	buf.Fill(Cell{' ', ColorDefault, p.Bg})
+	buf.Fill(Cell{p.Texture, ColorDefault, p.Bg})
 
 	if p.Render != nil {
 		err := p.Render(buf)
@@ -101,6 +106,9 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 
 	for _, o := range ordered {
 		c := o.Pencere
+		if !c.Visible {
+			continue
+		}
 		childBuffer, err := renderPencere(c)
 		if err != nil {
 			return nil, e.WrapfEx(err, "jdjf", "could not render")
@@ -110,7 +118,7 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 		buf.MergeChildArea(childBuffer, c.Left, c.Top, c.Width, c.Height)
 
 	}
-	if p.topBar != nil {
+	if p.topBar != nil && p.topBar.Visible {
 		c := p.topBar
 		childBuffer, err := renderPencere(p.topBar)
 		if err != nil {
@@ -120,7 +128,7 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 		buf.MergeChildArea(childBuffer, c.Left, c.Top, c.Width, c.Height)
 	}
 
-	if p.buttomBar != nil {
+	if p.buttomBar != nil && p.buttomBar.Visible {
 		c := p.buttomBar
 		childBuffer, err := renderPencere(p.buttomBar)
 		if err != nil {
@@ -130,7 +138,7 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 		buf.MergeChildArea(childBuffer, c.Left, c.Top, c.Width, c.Height)
 	}
 
-	if p.leftBar != nil {
+	if p.leftBar != nil && p.leftBar.Visible {
 		c := p.leftBar
 		childBuffer, err := renderPencere(p.leftBar)
 		if err != nil {
@@ -140,7 +148,7 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 		buf.MergeChildArea(childBuffer, c.Left, c.Top, c.Width, c.Height)
 	}
 
-	if p.rightBar != nil {
+	if p.rightBar != nil && p.rightBar.Visible {
 		c := p.rightBar
 		childBuffer, err := renderPencere(p.rightBar)
 		if err != nil {
