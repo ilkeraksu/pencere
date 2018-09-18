@@ -4,7 +4,7 @@ IT IS JUST A PROTOTYPE FOR NOW AND SUBJECT TO HEAVYLY CHANGE
 
 A new Terminal UI kit for go
 
-<img  width="480" height="473" src="https://github.com/ilkeraksu/pencere/blob/master/media/media/pencere_preview_01.gif">
+<img  width="480" height="473" src="https://github.com/ilkeraksu/pencere/blob/master/media/pencere_preview_01.gif">
 
 
 
