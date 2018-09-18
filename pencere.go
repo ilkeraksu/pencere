@@ -116,6 +116,10 @@ func (this *Pencere) Apply(options ...Option) error {
 	return nil
 }
 
+func (this *Pencere) Window() *Pencere {
+	return this
+}
+
 func (this *Pencere) Parent() *Pencere {
 	return this.parent
 }
@@ -124,15 +128,8 @@ func (this *Pencere) Childs() []*Pencere {
 	return this.childs
 }
 
-func (this *Pencere) AddPencere(p *Pencere) {
-
-	p.parent = this
-	this.childs = append(this.childs, p)
-
-}
-
-func (this *Pencere) AddControl(c Control) {
-	p := c.Pencere()
+func (this *Pencere) AddWindow(c Control) {
+	p := c.Window()
 	p.parent = this
 	this.childs = append(this.childs, p)
 }

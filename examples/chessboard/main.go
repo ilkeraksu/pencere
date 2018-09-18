@@ -33,7 +33,7 @@ func run() error {
 		return err
 	}
 
-	pencere.Root().AddControl(board)
+	pencere.Root().AddWindow(board)
 
 	board.SetPiece("a1", "castle", "white")
 	board.SetPiece("b1", "horse", "white")
@@ -134,7 +134,7 @@ func newBoard() (*Board, error) {
 
 	p.BorderFg = 255
 	board := &Board{
-		p:                 p,
+		Pencere:           p,
 		sequareMap:        make(map[string]*Square),
 		sequareWidth:      10,
 		sequareHeight:     5,
@@ -148,28 +148,28 @@ func newBoard() (*Board, error) {
 
 	for x := 0; x < 8; x++ {
 		for y := 0; y < 8; y++ {
-			s := NewSequare(board, pencere.Position(board.leftMargin+x*board.sequareWidth, board.topMargin+y*board.sequareHeight, board.sequareWidth, board.sequareHeight))
+			s := NewSequare(pencere.Position(board.leftMargin+x*board.sequareWidth, board.topMargin+y*board.sequareHeight, board.sequareWidth, board.sequareHeight))
 			board.sequares = append(board.sequares, s)
 
 			board.sequareMap[string(letters[x])+fmt.Sprintf("%v", 7-y+1)] = s
-			board.AddControl(s)
+			board.AddWindow(s)
 
 			if (x+y)%2 == 0 {
-				s.Pencere().Bg = board.WhiteSequareColor
+				s.Bg = board.WhiteSequareColor
 			} else {
-				s.Pencere().Bg = board.BlackSequareColor
+				s.Bg = board.BlackSequareColor
 			}
 		}
 	}
 
 	for x := 0; x < 8; x++ {
-		board.AddPencere(board.newBoardLabel(5+x*board.sequareWidth+(board.sequareWidth/2), 2, string(letters[x])))
-		board.AddPencere(board.newBoardLabel(5+x*board.sequareWidth+(board.sequareWidth/2), 45, string(letters[x])))
+		board.AddWindow(board.newBoardLabel(5+x*board.sequareWidth+(board.sequareWidth/2), 2, string(letters[x])))
+		board.AddWindow(board.newBoardLabel(5+x*board.sequareWidth+(board.sequareWidth/2), 45, string(letters[x])))
 
 	}
 	for y := 0; y < 8; y++ {
-		board.AddPencere(board.newBoardLabel(3, 4+y*board.sequareHeight+(board.sequareHeight/2), string(numbers[7-y])))
-		board.AddPencere(board.newBoardLabel(89, 4+y*board.sequareHeight+(board.sequareHeight/2), string(numbers[7-y])))
+		board.AddWindow(board.newBoardLabel(3, 4+y*board.sequareHeight+(board.sequareHeight/2), string(numbers[7-y])))
+		board.AddWindow(board.newBoardLabel(89, 4+y*board.sequareHeight+(board.sequareHeight/2), string(numbers[7-y])))
 
 	}
 
@@ -177,7 +177,7 @@ func newBoard() (*Board, error) {
 }
 
 type Board struct {
-	p             *pencere.Pencere
+	*pencere.Pencere
 	sequareWidth  int
 	sequareHeight int
 	leftMargin    int
@@ -193,18 +193,6 @@ type Board struct {
 	WhitePieceColor pencere.Color
 
 	labels []*pencere.Pencere
-}
-
-func (this *Board) Pencere() *pencere.Pencere {
-	return this.p
-}
-
-func (this *Board) AddPencere(p *pencere.Pencere) {
-	this.p.AddPencere(p)
-}
-
-func (this *Board) AddControl(c pencere.Control) {
-	this.p.AddControl(c)
 }
 
 func (this *Board) SetPiece(name string, pieceType string, pieceColor string) {
@@ -229,7 +217,7 @@ func (this *Board) newBoardLabel(x, y int, text string) *pencere.Pencere {
 	return p
 }
 
-func NewSequare(board *Board, options ...pencere.Option) *Square {
+func NewSequare(options ...pencere.Option) *Square {
 	p, err := pencere.NewPencere(options...)
 	p.Bg = recColor
 	p.Fg = 3
@@ -238,118 +226,31 @@ func NewSequare(board *Board, options ...pencere.Option) *Square {
 	p.CanFocus = true
 
 	s := &Square{
-		p: p,
+		Pencere: p,
 	}
 
-	p.OnFocus = func() error {
-		p.Properties.SetValue("Bg", int(p.Bg))
-		p.Bg = focusColor
-		return nil
-	}
+	p.OnFocus = s.OnFocus
 
-	p.OnLostFocus = func() error {
-		p.Bg = pencere.Color(p.Properties.GetInt("Bg", int(p.Bg)))
-		return nil
-	}
+	p.OnLostFocus = s.OnLostFocus
 
 	p.Render = s.Render
-
-	p.OnDragBegin = func(event pencere.DragBeginEvent) (bool, *pencere.DragContext, error) {
-
-		if s.PieceType == "" {
-			return false, nil, nil
-		}
-		dragContext := pencere.NewDragContext(p)
-		dragContext.IconOffsetX = -event.X
-		dragContext.IconOffsetY = -event.Y
-
-		draggingSquare := NewSequare(board, pencere.Position(0, 0, board.sequareWidth, board.sequareHeight))
-
-		draggingSquare.PieceType = s.PieceType
-		draggingSquare.PieceColor = s.PieceColor
-		draggingSquare.Pencere().Fg = p.Fg
-		draggingSquare.Pencere().Bg = p.Bg
-
-		dragContext.DraggingIcon = draggingSquare.Pencere()
-
-		dragContext.Properties.SetString("pieceType", s.PieceType)
-		dragContext.Properties.SetString("pieceColor", s.PieceColor)
-
-		return true, dragContext, nil
-	}
-
-	p.OnDragEnd = func(event pencere.DragEndEvent) error {
-
-		if event.DropedPencere != nil {
-			s.PieceType = ""
-			s.PieceColor = ""
-			pencere.SetFocus(event.DropedPencere)
-		}
-
-		return nil
-	}
-
-	p.OnDragging = func(event pencere.DraggingEvent) error {
-
-		// dy := p.Properties.GetInt("dragY", 0)
-		// dx := p.Properties.GetInt("dragX", 0)
-		// x, y := p.Parent().TranslateToXY(event.GlobalX, event.GlobalY)
-
-		// board.draggingSquare.Pencere().Left, board.draggingSquare.Pencere().Top = x-dx, y-dy
-
-		return nil
-	}
-
-	p.OnDragEnter = func(event pencere.DragEnterEvent) error {
-
-		p.Properties.SetInt("dragBg", int(p.Bg))
-		p.Bg = 145
-		return nil
-	}
-
-	p.OnDragLeave = func(event pencere.DragLeaveEvent) error {
-
-		p.Bg = pencere.Color(p.Properties.GetInt("dragBg", int(p.Bg)))
-		return nil
-	}
-
-	p.OnDrop = func(event pencere.DropEvent) error {
-
-		s.PieceType = event.DragContext.Properties.GetString("pieceType", "")
-		s.PieceColor = event.DragContext.Properties.GetString("pieceColor", "")
-
-		return nil
-	}
-
-	p.CanDrop = func(event pencere.DropEvent) (bool, error) {
-		if event.DragContext.Properties.GetString("pieceColor", "") == s.PieceColor {
-			return false, nil
-		}
-
-		return true, nil
-	}
+	p.OnDragBegin = s.OnDragBegin
+	p.OnDragEnd = s.OnDragEnd
+	p.OnDragEnter = s.OnDragEnter
+	p.OnDragLeave = s.OnDragLeave
+	p.OnDrop = s.OnDrop
+	p.CanDrop = s.CanDrop
 
 	return s
 }
 
 type Square struct {
-	PieceType   string
-	PieceColor  string
-	p           *pencere.Pencere
+	*pencere.Pencere
+	PieceType  string
+	PieceColor string
+
 	Selected    bool
 	HighLighted bool
-}
-
-func (this *Square) Pencere() *pencere.Pencere {
-	return this.p
-}
-
-func (this *Square) AddPencere(p *pencere.Pencere) {
-	this.p.AddPencere(p)
-}
-
-func (this *Square) AddControl(c pencere.Control) {
-	this.p.AddControl(c)
 }
 
 func (this *Square) Render(buf *pencere.Buffer) error {
@@ -362,17 +263,87 @@ func (this *Square) Render(buf *pencere.Buffer) error {
 	}
 	switch this.PieceType {
 	case "pawn":
-		drawPawn(buf, pg, this.p.Bg)
+		drawPawn(buf, pg, this.Bg)
 	case "bishop":
-		drawBishop(buf, pg, this.p.Bg)
+		drawBishop(buf, pg, this.Bg)
 	case "castle":
-		drawCastle(buf, pg, this.p.Bg)
+		drawCastle(buf, pg, this.Bg)
 	case "horse":
-		drawHorse(buf, pg, this.p.Bg)
+		drawHorse(buf, pg, this.Bg)
 	case "king":
-		drawKing(buf, pg, this.p.Bg)
+		drawKing(buf, pg, this.Bg)
 	case "queen":
-		drawQueen(buf, pg, this.p.Bg)
+		drawQueen(buf, pg, this.Bg)
 	}
+	return nil
+}
+
+func (this *Square) CanDrop(event pencere.DropEvent) (bool, error) {
+	if event.DragContext.Properties.GetString("pieceColor", "") == this.PieceColor {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (this *Square) OnDrop(event pencere.DropEvent) error {
+	this.PieceType = event.DragContext.Properties.GetString("pieceType", "")
+	this.PieceColor = event.DragContext.Properties.GetString("pieceColor", "")
+
+	return nil
+}
+
+func (this *Square) OnDragLeave(event pencere.DragLeaveEvent) error {
+	this.Bg = pencere.Color(this.Properties.GetInt("dragBg", int(this.Bg)))
+	return nil
+}
+
+func (this *Square) OnDragEnter(event pencere.DragEnterEvent) error {
+	this.Properties.SetInt("dragBg", int(this.Bg))
+	this.Bg = 145
+	return nil
+}
+
+func (this *Square) OnDragEnd(event pencere.DragEndEvent) error {
+	if event.DropedPencere != nil {
+		this.PieceType = ""
+		this.PieceColor = ""
+		pencere.SetFocus(event.DropedPencere)
+	}
+
+	return nil
+}
+
+func (this *Square) OnDragBegin(event pencere.DragBeginEvent) (bool, *pencere.DragContext, error) {
+	if this.PieceType == "" {
+		return false, nil, nil
+	}
+	dragContext := pencere.NewDragContext(this.Pencere)
+	dragContext.IconOffsetX = -event.X
+	dragContext.IconOffsetY = -event.Y
+
+	draggingSquare := NewSequare(pencere.Position(0, 0, this.Width, this.Height))
+
+	draggingSquare.PieceType = this.PieceType
+	draggingSquare.PieceColor = this.PieceColor
+	draggingSquare.Fg = this.Fg
+	draggingSquare.Bg = this.Bg
+
+	dragContext.DraggingIcon = draggingSquare.Window()
+
+	dragContext.Properties.SetString("pieceType", this.PieceType)
+	dragContext.Properties.SetString("pieceColor", this.PieceColor)
+
+	return true, dragContext, nil
+}
+
+func (this *Square) OnFocus() error {
+	this.Properties.SetValue("Bg", int(this.Bg))
+	this.Bg = focusColor
+	return nil
+}
+
+func (this *Square) OnLostFocus() error {
+	this.Bg = pencere.Color(this.Properties.GetInt("Bg", int(this.Bg)))
 	return nil
 }

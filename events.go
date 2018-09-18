@@ -158,16 +158,10 @@ func (this EventStream) HandleEvent(e tb.Event) {
 						}
 						mouseDraggingWindow.OnDragging(event)
 
-						// dy := p.Properties.GetInt("dragY", 0)
-						// dx := p.Properties.GetInt("dragX", 0)
-						// x, y := p.Parent().TranslateToXY(event.GlobalX, event.GlobalY)
+					}
 
-						//board.draggingSquare.Pencere().Left, board.draggingSquare.Pencere().Top = x-dx, y-dy
-
-						if globalDragContext != nil && globalDragContext.DraggingIcon != nil {
-							globalDragContext.DraggingIcon.Left, globalDragContext.DraggingIcon.Top = event.GlobalX, event.GlobalY
-						}
-
+					if globalDragContext != nil && globalDragContext.DraggingIcon != nil {
+						globalDragContext.DraggingIcon.Left, globalDragContext.DraggingIcon.Top = e.MouseX, e.MouseY
 					}
 				}
 

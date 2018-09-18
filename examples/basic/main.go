@@ -49,7 +49,7 @@ func run() error {
 		return err
 	}
 
-	pencere.Root().AddPencere(b)
+	pencere.Root().AddWindow(b)
 
 	b.Label = "ilker"
 
@@ -69,7 +69,7 @@ func run() error {
 		return err
 	}
 
-	b.AddPencere(c1)
+	b.AddWindow(c1)
 
 	c1.Label = "[x] c1"
 
@@ -78,7 +78,7 @@ func run() error {
 		return err
 	}
 
-	b.AddPencere(c2)
+	b.AddWindow(c2)
 	c2.Label = "c2"
 
 	c2.Scrollable = true
@@ -100,7 +100,7 @@ func run() error {
 
 	c2.SetButtomBar(c2status)
 
-	txt, err := pencere.NewTextBox(pencere.Position(10, 10, 40, 30))
+	txt, err := pencere.NewMultiLineTextBox(pencere.Position(10, 10, 40, 30))
 	if err != nil {
 		return err
 	}
@@ -108,30 +108,30 @@ func run() error {
 
 	txt.Scrollable = true
 
-	c2.AddPencere(txt)
+	c2.AddWindow(txt)
 
-	txt2, err := pencere.NewTextBox(pencere.Position(55, 10, 40, 30))
+	txt2, err := pencere.NewMultiLineTextBox(pencere.Position(55, 10, 40, 30))
 	if err != nil {
 		return err
 	}
 
 	txt2.HasBorder = false
 
-	c2.AddPencere(txt2)
+	c2.AddWindow(txt2)
 
 	b2, err := pencere.NewBox(pencere.LayoutFill())
 	if err != nil {
 		return err
 	}
 
-	c2.AddPencere(b2)
+	c2.AddWindow(b2)
 
 	b3, err := pencere.NewBox(pencere.LayoutFill())
 	if err != nil {
 		return err
 	}
 
-	b2.AddPencere(b3)
+	b2.AddWindow(b3)
 
 	v, err := pencere.NewVerticalSplitter()
 	if err != nil {
@@ -145,9 +145,9 @@ func run() error {
 		return err
 	}
 
-	c2.AddPencere(buton1)
+	c2.AddWindow(buton1)
 
-	b.AddPencere(v)
+	b.AddWindow(v)
 
 	c2.Layout = func() error {
 		c2.Top = v.Top
