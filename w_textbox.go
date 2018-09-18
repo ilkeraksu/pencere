@@ -16,8 +16,8 @@ func NewTextBox(options ...Option) (*Pencere, error) {
 	runeBuffer := &RuneBuffer{
 		wordwrap: true,
 	}
-	p.SetValue("text", runeBuffer)
-	p.SetValue("offset", 0)
+	p.Properties.SetValue("text", runeBuffer)
+	p.Properties.SetValue("offset", 0)
 
 	textboxStyle := p.Theme.Style("textbox")
 	p.Bg = textboxStyle.Bg
@@ -26,7 +26,7 @@ func NewTextBox(options ...Option) (*Pencere, error) {
 	p.Render = func(buf *Buffer) error {
 		//buf.SetString(1, 1, "DENEME 2", -1, -1)
 
-		text := p.GetValue("text").(*RuneBuffer)
+		text := p.Properties.GetValue("text").(*RuneBuffer)
 		text.SetMaxWidth(p.Width - 2)
 
 		lines := text.SplitByLine()
@@ -59,9 +59,9 @@ func NewTextBox(options ...Option) (*Pencere, error) {
 
 		screenWidth := p.Width
 
-		text := p.GetValue("text").(*RuneBuffer)
+		text := p.Properties.GetValue("text").(*RuneBuffer)
 		text.SetMaxWidth(screenWidth)
-		offset := p.GetValue("offset").(int)
+		offset := p.Properties.GetValue("offset").(int)
 
 		if ev.Rune == 0 {
 			switch ev.Key {
@@ -75,7 +75,7 @@ func NewTextBox(options ...Option) (*Pencere, error) {
 				isTextRemaining := text.Width()-offset > p.Width
 				if offset > 0 && !isTextRemaining {
 					offset--
-					p.SetValue("offset", offset)
+					p.Properties.SetValue("offset", offset)
 				}
 				p.FireEvent("text_changed", nil)
 			case tb.KeyDelete, tb.KeyCtrlD:
@@ -86,7 +86,7 @@ func NewTextBox(options ...Option) (*Pencere, error) {
 				text.MoveBackward()
 				if offset > 0 {
 					offset--
-					p.SetValue("offset", offset)
+					p.Properties.SetValue("offset", offset)
 				}
 			//case tb.KeyRight, tb.KeyCtrlF:
 			case tb.KeyArrowRight, tb.KeyCtrlF:
@@ -97,18 +97,18 @@ func NewTextBox(options ...Option) (*Pencere, error) {
 
 				if isCursorTooFar && isTextLeft {
 					offset++
-					p.SetValue("offset", offset)
+					p.Properties.SetValue("offset", offset)
 				}
 			case tb.KeyHome, tb.KeyCtrlA:
 				text.MoveToLineStart()
 				offset = 0
-				p.SetValue("offset", offset)
+				p.Properties.SetValue("offset", offset)
 			case tb.KeyEnd, tb.KeyCtrlE:
 				text.MoveToLineEnd()
 				left := text.Width() - (screenWidth - 1)
 				if left >= 0 {
 					offset = left
-					p.SetValue("offset", offset)
+					p.Properties.SetValue("offset", offset)
 				}
 			case tb.KeyCtrlK:
 				text.Kill()
@@ -124,7 +124,7 @@ func NewTextBox(options ...Option) (*Pencere, error) {
 		text.WriteRune(ev.Rune)
 		if text.CursorPos().X >= screenWidth {
 			offset++
-			p.SetValue("offset", offset)
+			p.Properties.SetValue("offset", offset)
 		}
 		p.FireEvent("text_changed", nil)
 		p.ContentY = text.heightForWidth(p.Width)

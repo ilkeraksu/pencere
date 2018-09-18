@@ -2,10 +2,10 @@ package pencere
 
 import (
 	"sort"
-	"su/pkg/e"
 	"sync"
 
 	tb "github.com/nsf/termbox-go"
+	"github.com/pkg/errors"
 )
 
 // Bufferer should be implemented by all renderable components.
@@ -58,7 +58,7 @@ func render() error {
 	buf, err := renderPencere(root)
 
 	if err != nil {
-		return e.WrapfEx(err, "4kd", "could not Render")
+		return errors.Wrapf(err, "4kd", "could not Render")
 	}
 
 	for p, c := range buf.CellMap {
@@ -68,6 +68,26 @@ func render() error {
 			tb.SetCell(p.X, p.Y, c.Ch, tb.Attribute(c.Fg)+1, tb.Attribute(c.Bg)+1)
 			//	tb.SetCell(p.X, p.Y, c.Ch, tb.ColorBlue, tb.ColorCyan)
 
+		}
+	}
+
+	if globalDragContext != nil && globalDragContext.DraggingIcon != nil {
+		dp := globalDragContext.DraggingIcon
+		buf := NewBuffer()
+		buf.SetAreaXY(dp.Width, dp.Height)
+		buf.Fill(Cell{dp.Texture, ColorDefault, dp.Bg})
+
+		if dp.Render != nil {
+			err := dp.Render(buf)
+			if err != nil {
+				return errors.Wrapf(err, "could not Render")
+			}
+		}
+
+		for p, c := range buf.CellMap {
+			if p.In(buf.Area) {
+				tb.SetCell(dp.Left+p.X+globalDragContext.IconOffsetX, dp.Top+p.Y+globalDragContext.IconOffsetY, c.Ch, tb.Attribute(c.Fg)+1, tb.Attribute(c.Bg)+1)
+			}
 		}
 	}
 
@@ -87,13 +107,13 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 	if p.Render != nil {
 		err := p.Render(buf)
 		if err != nil {
-			return nil, e.WrapfEx(err, "", "could not Render")
+			return nil, errors.Wrapf(err, "could not Render")
 		}
 	}
 
 	ordered := make([]PencereOrder, len(p.childs))
 	for i, p := range p.childs {
-		ordered[i].Order = p.ZIndex
+		ordered[i].Order = p.zindex
 		ordered[i].Pencere = p
 	}
 
@@ -111,7 +131,7 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 		}
 		childBuffer, err := renderPencere(c)
 		if err != nil {
-			return nil, e.WrapfEx(err, "jdjf", "could not render")
+			return nil, errors.Wrapf(err, "jdjf", "could not render")
 		}
 
 		//buf.MergeChildArea(childBuffer, c.Left+c.Inner.Min.X, c.Top+c.Inner.Min.Y, c.Inner.Dx(), c.Inner.Dy())
@@ -122,7 +142,7 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 		c := p.topBar
 		childBuffer, err := renderPencere(p.topBar)
 		if err != nil {
-			return nil, e.WrapfEx(err, "jdjf", "could not render")
+			return nil, errors.Wrapf(err, "jdjf", "could not render")
 		}
 
 		buf.MergeChildArea(childBuffer, c.Left, c.Top, c.Width, c.Height)
@@ -132,7 +152,7 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 		c := p.buttomBar
 		childBuffer, err := renderPencere(p.buttomBar)
 		if err != nil {
-			return nil, e.WrapfEx(err, "jdjf", "could not render")
+			return nil, errors.Wrapf(err, "jdjf", "could not render")
 		}
 
 		buf.MergeChildArea(childBuffer, c.Left, c.Top, c.Width, c.Height)
@@ -142,7 +162,7 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 		c := p.leftBar
 		childBuffer, err := renderPencere(p.leftBar)
 		if err != nil {
-			return nil, e.WrapfEx(err, "jdjf", "could not render")
+			return nil, errors.Wrapf(err, "jdjf", "could not render")
 		}
 
 		buf.MergeChildArea(childBuffer, c.Left, c.Top, c.Width, c.Height)
@@ -152,7 +172,7 @@ func renderPencere(p *Pencere) (*Buffer, error) {
 		c := p.rightBar
 		childBuffer, err := renderPencere(p.rightBar)
 		if err != nil {
-			return nil, e.WrapfEx(err, "jdjf", "could not render")
+			return nil, errors.Wrapf(err, "jdjf", "could not render")
 		}
 		buf.MergeChildArea(childBuffer, c.Left, c.Top, c.Width, c.Height)
 	}
@@ -233,7 +253,7 @@ func layoutPencere(p *Pencere) error {
 	if p.Layout != nil {
 		err := p.Layout()
 		if err != nil {
-			return e.WrapfEx(err, "", "could not layout")
+			return errors.Wrapf(err, "could not layout")
 		}
 	}
 
@@ -241,25 +261,29 @@ func layoutPencere(p *Pencere) error {
 		return nil
 	}
 
-	ordered := make([]PencereOrder, len(p.childs))
-	for i, p := range p.childs {
-		ordered[i].Order = p.LayoutOrder
-		ordered[i].Pencere = p
+	if p.layoutOrderCache == nil {
+		ordered := make([]PencereOrder, len(p.childs))
+		for i, p := range p.childs {
+			ordered[i].Order = p.layoutOrder
+			ordered[i].Pencere = p
+		}
+
+		sort.Slice(ordered, func(i, j int) bool {
+			if ordered[i].Order == ordered[j].Order {
+				return ordered[i].Pencere.handle < ordered[j].Pencere.handle
+			}
+			return ordered[i].Order < ordered[j].Order
+		})
+		p.layoutOrderCache = ordered
 	}
 
-	sort.Slice(ordered, func(i, j int) bool {
-		if ordered[i].Order == ordered[j].Order {
-			return ordered[i].Pencere.handle < ordered[j].Pencere.handle
-		}
-		return ordered[i].Order < ordered[j].Order
-	})
-
-	for _, o := range ordered {
+	for _, o := range p.layoutOrderCache {
 		err := layoutPencere(o.Pencere)
 		if err != nil {
-			return e.WrapfEx(err, "jds3jf", "could not layout")
+			return errors.Wrapf(err, "could not layout")
 		}
 
 	}
+
 	return nil
 }

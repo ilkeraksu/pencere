@@ -28,6 +28,18 @@ var mouseReleaseWaiting bool
 
 var mouseLastClicked *Pencere
 var mouseDraggingWindow *Pencere
+var mouseDragOverWindow *Pencere
+var mouseDragContext *DragContext
+
+func isDropable(p *Pencere, event DropEvent) bool {
+	if p.CanDrop == nil || p.OnDrop == nil {
+		return false
+	}
+
+	canDrop, err := p.CanDrop(event)
+	_ = err
+	return canDrop
+}
 
 func (this EventStream) HandleEvent(e tb.Event) {
 	if e.Ch == 'q' {
@@ -72,22 +84,66 @@ func (this EventStream) HandleEvent(e tb.Event) {
 
 		case tb.MouseRelease:
 			if mouseDragging {
+				// we were dragging when mouserelase
+
+				// First we need to call DragLeave on previous dragover window
+				if mouseDragOverWindow != nil && mouseDragOverWindow.OnDragLeave != nil {
+					event := DragLeaveEvent{
+						Target:      mouseDraggingWindow,
+						DragContext: globalDragContext,
+						GlobalX:     e.MouseX,
+						GlobalY:     e.MouseY,
+					}
+
+					mouseDragOverWindow.OnDragLeave(event)
+				}
+
+				// no longer dragging
+				mouseDragOverWindow = nil
+
+				var dropedPencere *Pencere
+				p, x, y := getPencereAt(e.MouseX, e.MouseY)
+				// check if we hit a window on mouse release
+				if p != nil {
+					// we have a window on releaase point
+
+					// send OnDrag
+					event := DropEvent{
+						DragContext: globalDragContext,
+						Target:      mouseDraggingWindow,
+						GlobalX:     e.MouseX,
+						GlobalY:     e.MouseY,
+						X:           x,
+						Y:           y,
+					}
+					if isDropable(p, event) {
+						p.OnDrop(event)
+						dropedPencere = p
+					}
+
+				} else { // No dragging nothing to do
+
+				}
+
 				if mouseDraggingWindow != nil {
 					if mouseDraggingWindow.OnDragEnd != nil {
-						event := MouseEvent{
-							Target:  mouseDraggingWindow,
-							GlobalX: e.MouseX,
-							GlobalY: e.MouseY,
+						event := DragEndEvent{
+							DragContext:   globalDragContext,
+							DropedPencere: dropedPencere,
+							Target:        mouseDraggingWindow,
+							GlobalX:       e.MouseX,
+							GlobalY:       e.MouseY,
 						}
 						mouseDraggingWindow.OnDragEnd(event)
 
 					}
 				}
-
+				globalDragContext = nil
 			}
 
 			mouseDragging = false
 			mouseReleaseWaiting = false
+
 			Render()
 			return
 
@@ -95,15 +151,130 @@ func (this EventStream) HandleEvent(e tb.Event) {
 			if mouseDragging {
 				if mouseDraggingWindow != nil {
 					if mouseDraggingWindow.OnDragging != nil {
-						event := MouseEvent{
+						event := DraggingEvent{
 							Target:  mouseDraggingWindow,
 							GlobalX: e.MouseX,
 							GlobalY: e.MouseY,
 						}
 						mouseDraggingWindow.OnDragging(event)
 
+						// dy := p.Properties.GetInt("dragY", 0)
+						// dx := p.Properties.GetInt("dragX", 0)
+						// x, y := p.Parent().TranslateToXY(event.GlobalX, event.GlobalY)
+
+						//board.draggingSquare.Pencere().Left, board.draggingSquare.Pencere().Top = x-dx, y-dy
+
+						if globalDragContext != nil && globalDragContext.DraggingIcon != nil {
+							globalDragContext.DraggingIcon.Left, globalDragContext.DraggingIcon.Top = event.GlobalX, event.GlobalY
+						}
+
 					}
 				}
+
+				p, x, y := getPencereAt(e.MouseX, e.MouseY)
+
+				// we are on some window
+				if p != nil {
+
+					// check we are already dragging over
+					if mouseDragOverWindow == nil {
+						dropEvent := DropEvent{
+							DragContext: globalDragContext,
+							Target:      mouseDraggingWindow,
+							GlobalX:     e.MouseX,
+							GlobalY:     e.MouseY,
+							X:           x,
+							Y:           y,
+						}
+
+						if isDropable(p, dropEvent) {
+							// we are not already dragging over so need to call OnDragEnter
+							mouseDragOverWindow = p
+							if mouseDragOverWindow.OnDragEnter != nil {
+								event := DragEnterEvent{
+									Target:      mouseDraggingWindow,
+									DragContext: globalDragContext,
+									GlobalX:     e.MouseX,
+									GlobalY:     e.MouseY,
+									X:           x,
+									Y:           y,
+								}
+								mouseDragOverWindow.OnDragEnter(event)
+							}
+						}
+
+					} else { // we are already dragging over
+
+						// check if it is same window we already dragging over
+						if mouseDragOverWindow == p {
+							// yes same window so call OnDragOver
+							if mouseDragOverWindow.OnDragOver != nil {
+								event := DragOverEvent{
+									Target:  mouseDraggingWindow,
+									GlobalX: e.MouseX,
+									GlobalY: e.MouseY,
+									X:       x,
+									Y:       y,
+								}
+								mouseDragOverWindow.OnDragOver(event)
+							}
+						} else { // this is new window we are dragging over
+
+							// we need to leave first
+							if mouseDragOverWindow.OnDragLeave != nil {
+								event := DragLeaveEvent{
+									Target:      mouseDraggingWindow,
+									DragContext: globalDragContext,
+									GlobalX:     e.MouseX,
+									GlobalY:     e.MouseY,
+								}
+
+								mouseDragOverWindow.OnDragLeave(event)
+							}
+							mouseDragOverWindow = p
+
+							dropEvent := DropEvent{
+								DragContext: globalDragContext,
+								Target:      mouseDraggingWindow,
+								GlobalX:     e.MouseX,
+								GlobalY:     e.MouseY,
+								X:           x,
+								Y:           y,
+							}
+
+							if isDropable(p, dropEvent) {
+								// and lets DragEnter
+								if mouseDragOverWindow.OnDragEnter != nil {
+									event := DragEnterEvent{
+										Target:      mouseDraggingWindow,
+										DragContext: globalDragContext,
+										GlobalX:     e.MouseX,
+										GlobalY:     e.MouseY,
+										X:           x,
+										Y:           y,
+									}
+									mouseDragOverWindow.OnDragEnter(event)
+								}
+							}
+						}
+					}
+
+				} else { // we are not on a window
+					// check if we were on a window and dragover
+					// if so we need to call OnDragLeave
+					if mouseDragOverWindow != nil && mouseDragOverWindow.OnDragLeave != nil {
+						event := DragLeaveEvent{
+							Target:      mouseDraggingWindow,
+							DragContext: globalDragContext,
+							GlobalX:     e.MouseX,
+							GlobalY:     e.MouseY,
+						}
+
+						mouseDragOverWindow.OnDragLeave(event)
+						mouseDragOverWindow = nil
+					}
+				}
+
 				Render()
 				return
 			}
@@ -117,16 +288,21 @@ func (this EventStream) HandleEvent(e tb.Event) {
 				_, _ = x, y
 
 				if p.OnDragBegin != nil {
-					event := MouseEvent{
+					event := DragBeginEvent{
 						Target:  p,
 						GlobalX: e.MouseX,
 						GlobalY: e.MouseY,
 						X:       x,
 						Y:       y,
 					}
-					drag, err := p.OnDragBegin(event)
+					drag, dragContext, err := p.OnDragBegin(event)
 					panicif(err)
 					if drag {
+						if dragContext.DraggingIcon != nil {
+							dragContext.DraggingIcon.Left = event.GlobalX
+							dragContext.DraggingIcon.Top = event.GlobalY
+						}
+						globalDragContext = dragContext
 						mouseDraggingWindow = p
 						mouseDragging = true
 					}
@@ -183,22 +359,62 @@ func (this EventStream) HandleEvent(e tb.Event) {
 
 			mouseReleaseWaiting = true
 
-			//return "<MouseLeft>"
-			// case tb.MouseMiddle:
-			// 	return "<MouseMiddle>"
-			// case tb.MouseRight:
-			// 	return "<MouseRight>"
-			// case tb.MouseWheelUp:
-			// 	return "<MouseWheelUp>"
-			// case tb.MouseWheelDown:
-			// 	return "<MouseWheelDown>"
-			// case tb.MouseRelease:
-			// 	return "<MouseRelease>"
 		}
 	}
 }
 
 type MouseEvent struct {
+	Target           *Pencere
+	GlobalX, GlobalY int
+	X, Y             int
+	Type             int
+}
+
+type DragBeginEvent struct {
+	Target           *Pencere
+	GlobalX, GlobalY int
+	X, Y             int
+	Type             int
+}
+
+type DraggingEvent struct {
+	DragContext      *DragContext
+	Target           *Pencere
+	GlobalX, GlobalY int
+	X, Y             int
+	Type             int
+}
+type DragEndEvent struct {
+	DragContext      *DragContext
+	DropedPencere    *Pencere
+	Target           *Pencere
+	GlobalX, GlobalY int
+	X, Y             int
+	Type             int
+}
+type DragEnterEvent struct {
+	DragContext      *DragContext
+	Target           *Pencere
+	GlobalX, GlobalY int
+	X, Y             int
+	Type             int
+}
+type DragLeaveEvent struct {
+	DragContext      *DragContext
+	Target           *Pencere
+	GlobalX, GlobalY int
+	X, Y             int
+	Type             int
+}
+type DragOverEvent struct {
+	DragContext      *DragContext
+	Target           *Pencere
+	GlobalX, GlobalY int
+	X, Y             int
+	Type             int
+}
+type DropEvent struct {
+	DragContext      *DragContext
 	Target           *Pencere
 	GlobalX, GlobalY int
 	X, Y             int

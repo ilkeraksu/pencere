@@ -27,6 +27,6 @@ func NewVerticalSplitter(options ...Option) (*Pencere, error) {
 
 		return nil
 	}
-	p.LayoutOrder = -100
+	p.SetLayoutOrder(-100)
 	return p, nil
 }

@@ -33,7 +33,7 @@ func run() error {
 		return nil
 	}
 
-	pencere.Root().Add(box)
+	pencere.Root().AddPencere(box)
 
 	pencere.Loop()
 
