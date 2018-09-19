@@ -291,7 +291,7 @@ func (this EventStream) HandleEvent(e tb.Event) {
 					}
 					drag, dragContext, err := p.OnDragBegin(event)
 					panicif(err)
-					if drag {
+					if drag && dragContext != nil {
 						if dragContext.DraggingIcon != nil {
 							dragContext.DraggingIcon.Left = event.GlobalX
 							dragContext.DraggingIcon.Top = event.GlobalY

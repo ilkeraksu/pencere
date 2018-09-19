@@ -55,10 +55,11 @@ type Pencere struct {
 	OnFocus          func() error
 	OnLostFocus      func() error
 
-	OnKeyEvent func(event KeyEvent) error
-	Data       interface{}
-	Controller interface{}
-
+	OnKeyEvent  func(event KeyEvent) error
+	Data        interface{}
+	Controller  interface{}
+	Draggable   bool
+	Droppable   bool
 	OnDragBegin func(event DragBeginEvent) (bool, *DragContext, error)
 	OnDragging  func(event DraggingEvent) error
 	OnDragEnd   func(event DragEndEvent) error
